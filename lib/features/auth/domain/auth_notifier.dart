@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/failure.dart';
 import '../../../shared/models/app_user.dart';
@@ -10,13 +11,23 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthNotifier extends AsyncNotifier<AppUser?> {
+  StreamSubscription<AppUser?>? _authSub;
+
   @override
   Future<AppUser?> build() async {
     final repo = ref.watch(authRepositoryProvider);
 
+    // Cancel previous subscription if any
+    _authSub?.cancel();
+
     // Listen to auth state changes
-    repo.watchAuthState().listen((user) {
+    _authSub = repo.watchAuthState().listen((user) {
       state = AsyncData(user);
+    });
+
+    // Clean up on dispose
+    ref.onDispose(() {
+      _authSub?.cancel();
     });
 
     final result = await repo.getCurrentUser();
@@ -70,7 +81,10 @@ class AuthNotifier extends AsyncNotifier<AppUser?> {
 
   Future<void> resetPassword(String email) async {
     final repo = ref.read(authRepositoryProvider);
-    await repo.resetPassword(email);
+    final result = await repo.resetPassword(email);
+    if (result.isFailure) {
+      throw result.exceptionOrNull!;
+    }
   }
 
   Future<void> resendVerification(String email) async {

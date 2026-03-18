@@ -9,7 +9,7 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
 import 'features/auth/presentation/splash_screen.dart';
 import 'features/courses/presentation/course_detail_screen.dart';
-import 'features/courses/presentation/course_list_screen.dart';
+import 'features/courses/presentation/dashboard_screen.dart';
 import 'features/courses/presentation/create_course_screen.dart';
 import 'features/hardware/presentation/hardware_settings_screen.dart';
 import 'features/reports/presentation/report_screen.dart';
@@ -20,16 +20,20 @@ final _routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: _AuthChangeNotifier(ref),
     redirect: (context, state) {
+      final isLoading = authState.isLoading;
       final isLoggedIn = authState.valueOrNull != null;
       final isSplash = state.matchedLocation == '/splash';
       final isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/forgot-password';
 
-      // Leave splash once auth resolves
+      // While loading, stay on splash
+      if (isLoading && isSplash) return null;
+
+      // Once auth resolves, leave splash
       if (isSplash) {
-        if (authState.isLoading) return null;
         return isLoggedIn ? '/dashboard' : '/login';
       }
 
@@ -107,6 +111,17 @@ final _routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Notifier to force GoRouter to re-evaluate redirect when auth changes
+class _AuthChangeNotifier extends ChangeNotifier {
+  _AuthChangeNotifier(this._ref) {
+    _ref.listen(authNotifierProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+
+  final Ref _ref;
+}
 
 class SmartAttendanceApp extends ConsumerWidget {
   const SmartAttendanceApp({super.key});

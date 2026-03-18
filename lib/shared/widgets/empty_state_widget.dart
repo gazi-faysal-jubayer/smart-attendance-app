@@ -22,23 +22,37 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: Colors.grey[400],
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 64,
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
                   ),
             ),
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: onAction,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: Text(actionLabel!),
               ),
             ],

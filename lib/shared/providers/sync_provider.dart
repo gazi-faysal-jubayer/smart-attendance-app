@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'drift_db_provider.dart';
 import 'connectivity_provider.dart';
+import 'supabase_provider.dart';
+import '../../core/network/sync_queue_service.dart';
 
 enum SyncStatus { allSynced, syncing, offline }
 
@@ -33,4 +35,10 @@ final syncStatusProvider = Provider<SyncStatusState>((ref) {
     return SyncStatusState(status: SyncStatus.syncing, pendingCount: count);
   }
   return const SyncStatusState(status: SyncStatus.allSynced);
+});
+
+final syncQueueServiceProvider = Provider<SyncQueueService>((ref) {
+  final db = ref.watch(driftDbProvider);
+  final supabase = ref.watch(supabaseProvider);
+  return SyncQueueService(db, supabase);
 });

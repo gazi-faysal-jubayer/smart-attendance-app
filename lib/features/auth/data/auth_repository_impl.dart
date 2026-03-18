@@ -117,14 +117,24 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Failure(app_errors.AuthException('Not authenticated'));
       }
 
-      final profile = await _supabase
-          .from(SupabaseTables.profiles)
-          .select()
-          .eq(SupabaseTables.colId, user.id)
-          .single();
+      Map<String, dynamic>? profile;
+      try {
+        profile = await _supabase
+            .from(SupabaseTables.profiles)
+            .select()
+            .eq(SupabaseTables.colId, user.id)
+            .single();
+      } catch (_) {
+        // Offline or backend error, proceed with default profile data
+      }
 
       return Success(AppUser.fromMap({
-        ...profile,
+        ...(profile ?? {
+          SupabaseTables.colFullName: 'Teacher (Offline)',
+          SupabaseTables.colEmployeeId: '',
+          SupabaseTables.colDepartment: '',
+          SupabaseTables.colRole: 'teacher',
+        }),
         'email': user.email ?? '',
         'is_email_verified': user.emailConfirmedAt != null,
       }));
@@ -162,21 +172,27 @@ class AuthRepositoryImpl implements AuthRepository {
     return _supabase.auth.onAuthStateChange.asyncMap((data) async {
       if (data.session == null) return null;
 
+      Map<String, dynamic>? profile;
       try {
-        final profile = await _supabase
+        profile = await _supabase
             .from(SupabaseTables.profiles)
             .select()
             .eq(SupabaseTables.colId, data.session!.user.id)
             .single();
-
-        return AppUser.fromMap({
-          ...profile,
-          'email': data.session!.user.email ?? '',
-          'is_email_verified': data.session!.user.emailConfirmedAt != null,
-        });
       } catch (_) {
-        return null;
+        // Ignore offline errors
       }
+
+      return AppUser.fromMap({
+        ...(profile ?? {
+          SupabaseTables.colFullName: 'Teacher (Offline)',
+          SupabaseTables.colEmployeeId: '',
+          SupabaseTables.colDepartment: '',
+          SupabaseTables.colRole: 'teacher',
+        }),
+        'email': data.session!.user.email ?? '',
+        'is_email_verified': data.session!.user.emailConfirmedAt != null,
+      });
     });
   }
 }

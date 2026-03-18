@@ -76,7 +76,7 @@ class ReportRepositoryImpl implements ReportRepository {
   }
 
   @override
-  Future<Result<void>> exportCourseReport(String courseId) async {
+  Future<Result<String>> exportCourseReport(String courseId) async {
     try {
       final course = await _db.getCourseById(courseId);
       if (course == null) {
@@ -128,7 +128,7 @@ class ReportRepositoryImpl implements ReportRepository {
               })
           .toList();
 
-      await ExcelGenerator.buildAttendanceExcel(
+      final file = await ExcelGenerator.buildAttendanceExcel(
         courseCode: course.courseCode,
         semester: course.semester,
         students: studentMaps,
@@ -136,7 +136,7 @@ class ReportRepositoryImpl implements ReportRepository {
         records: recordMaps,
       );
 
-      return const Success(null);
+      return Success(file.path);
     } catch (e) {
       return Failure(DatabaseException(e.toString()));
     }

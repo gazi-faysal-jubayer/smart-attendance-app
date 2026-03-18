@@ -35,116 +35,197 @@ class _HardwareSettingsScreenState
       appBar: AppBar(
         title: const Text('Hardware Settings'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Connection status
-          Card(
-            child: ListTile(
-              leading: Icon(
-                isConnected ? Icons.bluetooth_connected : Icons.bluetooth,
-                color: isConnected ? AppColors.success : Colors.grey,
-              ),
-              title: Text(
-                isConnected ? 'Connected' : 'Not Connected',
-                style: TextStyle(
-                  color: isConnected ? AppColors.success : Colors.grey,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: const Text('MQTT WebSocket Connection'),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // MQTT settings
-          Text(
-            'MQTT Connection',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-
-          TextFormField(
-            controller: _brokerController,
-            decoration: const InputDecoration(
-              labelText: 'Broker Address',
-              hintText: 'e.g., broker.emqx.io',
-              prefixIcon: Icon(Icons.dns),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          TextFormField(
-            controller: _portController,
-            decoration: const InputDecoration(
-              labelText: 'Port',
-              hintText: '8083',
-              prefixIcon: Icon(Icons.settings_ethernet),
-            ),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 12),
-
-          TextFormField(
-            controller: _topicController,
-            decoration: const InputDecoration(
-              labelText: 'Topic Prefix',
-              hintText: 'kuet/attendance',
-              prefixIcon: Icon(Icons.topic),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          ElevatedButton.icon(
-            onPressed: () {
-              // Scaffold: show coming soon
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Hardware integration coming soon. This is a scaffold.'),
-                ),
-              );
-            },
-            icon: Icon(isConnected ? Icons.link_off : Icons.link),
-            label: Text(isConnected ? 'Disconnect' : 'Connect'),
-          ),
-
-          const SizedBox(height: 32),
-
-          // Info card
-          Card(
-            color: AppColors.primary.withValues(alpha: 0.05),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          size: 20, color: AppColors.primary),
-                      SizedBox(width: 8),
-                      Text(
-                        'Hardware Mode',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
+                  // Connection status
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isConnected ? AppColors.success.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.05),
+                      border: Border.all(
+                        color: isConnected ? AppColors.success.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.2),
                       ),
-                    ],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isConnected ? AppColors.success.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled_rounded,
+                            color: isConnected ? AppColors.success : Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isConnected ? 'Connected to Hardware' : 'Not Connected',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: isConnected ? AppColors.success : Colors.grey.shade700,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'MQTT WebSocket Connection',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey.shade600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 8),
+
+                  const SizedBox(height: 32),
+
                   Text(
-                    'When connected to a KUET attendance hardware device, '
-                    'attendance will be automatically captured via MQTT. '
-                    'Students are identified by their roll numbers through '
-                    'the connected scanner/reader.',
-                    style: TextStyle(fontSize: 13),
+                    'MQTT Configuration',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardTheme.color ?? Colors.white,
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _brokerController,
+                          decoration: const InputDecoration(
+                            labelText: 'Broker Address',
+                            hintText: 'e.g., broker.emqx.io',
+                            prefixIcon: Icon(Icons.dns_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: TextFormField(
+                                controller: _portController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Port',
+                                  hintText: '8083',
+                                  prefixIcon: Icon(Icons.settings_ethernet_rounded),
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: _topicController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Topic Prefix',
+                                  hintText: 'kuet/attendance',
+                                  prefixIcon: Icon(Icons.topic_outlined),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Hardware integration coming soon. This is a scaffold.'),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isConnected ? Colors.red.shade600 : AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: Icon(isConnected ? Icons.link_off_rounded : Icons.link_rounded),
+                            label: Text(
+                              isConnected ? 'Disconnect' : 'Connect to Receiver',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Info card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Hardware Attendance Mode',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'When connected to a KUET attendance hardware device, attendance will be automatically captured via MQTT. Students are identified by their roll numbers through the connected scanner or RFID reader.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

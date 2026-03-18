@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/errors/failure.dart';
 import '../../../core/theme/app_colors.dart';
@@ -27,26 +28,38 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
     if (mounted) {
       result.when(
-        success: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Report exported successfully!'),
-              backgroundColor: AppColors.success,
-            ),
+        success: (path) async {
+          if (mounted) setState(() => _exporting = false);
+          
+          await Share.shareXFiles(
+            [XFile(path)],
+            text: 'Attendance Report (Excel)',
           );
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Report exported successfully!'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
         },
         failure: (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Export failed: ${e.message}'),
-              backgroundColor: AppColors.statusAbsent,
-            ),
-          );
+          if (mounted) setState(() => _exporting = false);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Export failed: ${e.message}'),
+                backgroundColor: AppColors.statusAbsent,
+              ),
+            );
+          }
         },
       );
+    } else {
+      if (mounted) setState(() => _exporting = false);
     }
-
-    if (mounted) setState(() => _exporting = false);
   }
 
   @override
@@ -135,59 +148,78 @@ class _ReportBody extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 180,
-                    child: PieChart(
-                      PieChartData(
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 40,
-                        sections: [
-                          PieChartSectionData(
-                            color: AppColors.statusPresent,
-                            value: report.totalPresent.toDouble(),
-                            title:
-                                '${(report.totalPresent / total * 100).round()}%',
-                            titleStyle: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold),
-                            radius: 50,
+                    height: 200,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PieChart(
+                          PieChartData(
+                            sectionsSpace: 4,
+                            centerSpaceRadius: 60,
+                            sections: [
+                              PieChartSectionData(
+                                color: AppColors.statusPresent,
+                                value: report.totalPresent.toDouble(),
+                                title: '${(report.totalPresent / total * 100).round()}%',
+                                titleStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
+                                radius: 25,
+                              ),
+                              PieChartSectionData(
+                                color: AppColors.statusAbsent,
+                                value: report.totalAbsent.toDouble(),
+                                title: '${(report.totalAbsent / total * 100).round()}%',
+                                titleStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
+                                radius: 25,
+                              ),
+                              PieChartSectionData(
+                                color: AppColors.statusLate,
+                                value: report.totalLate.toDouble(),
+                                title: '${(report.totalLate / total * 100).round()}%',
+                                titleStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
+                                radius: 25,
+                              ),
+                              if (report.totalExcused > 0)
+                                PieChartSectionData(
+                                  color: AppColors.statusExcused,
+                                  value: report.totalExcused.toDouble(),
+                                  title: '${(report.totalExcused / total * 100).round()}%',
+                                  titleStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold),
+                                  radius: 25,
+                                ),
+                            ],
                           ),
-                          PieChartSectionData(
-                            color: AppColors.statusAbsent,
-                            value: report.totalAbsent.toDouble(),
-                            title:
-                                '${(report.totalAbsent / total * 100).round()}%',
-                            titleStyle: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold),
-                            radius: 50,
-                          ),
-                          PieChartSectionData(
-                            color: AppColors.statusLate,
-                            value: report.totalLate.toDouble(),
-                            title:
-                                '${(report.totalLate / total * 100).round()}%',
-                            titleStyle: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold),
-                            radius: 50,
-                          ),
-                          if (report.totalExcused > 0)
-                            PieChartSectionData(
-                              color: AppColors.statusExcused,
-                              value: report.totalExcused.toDouble(),
-                              title:
-                                  '${(report.totalExcused / total * 100).round()}%',
-                              titleStyle: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold),
-                              radius: 50,
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${((report.totalPresent + report.totalLate) / total * 100).round()}%',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
                             ),
-                        ],
-                      ),
+                            Text(
+                              'Attendance',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey.shade600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),

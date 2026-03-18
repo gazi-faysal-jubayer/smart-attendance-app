@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
 import '../providers/sync_provider.dart';
+import 'app_toast.dart';
 
 class SyncStatusChip extends ConsumerWidget {
   const SyncStatusChip({super.key});
@@ -40,9 +41,12 @@ class SyncStatusChip extends ConsumerWidget {
       ),
       backgroundColor: color.withValues(alpha: 0.1),
       side: BorderSide(color: color.withValues(alpha: 0.3)),
-      onPressed: () {
-        // TODO: Trigger manual sync
-      },
+      onPressed: syncState.status == SyncStatus.syncing
+          ? () {
+              ref.read(syncQueueServiceProvider).processPendingQueue();
+              AppToast.show(context, 'Syncing...');
+            }
+          : null,
     );
   }
 }
